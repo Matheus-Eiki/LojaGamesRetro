@@ -1,8 +1,9 @@
 ﻿
 using System;
-using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using LojaGamesRetro.Services;
 
@@ -10,132 +11,20 @@ namespace LojaGamesRetro.Views
 {
     public partial class FrmTeladeRelatorio : Form
     {
-        private readonly ServicesJogos servicoJogos =
-            new ServicesJogos();
+        private readonly ServicesJogos servicoJogos = new ServicesJogos();
+        private readonly ServicesVendas servicoVendas = new ServicesVendas();
 
-        private readonly ServicesVendas servicoVendas =
-            new ServicesVendas();
-
-        private readonly CultureInfo cultura =
-            new CultureInfo("pt-BR");
-
-        private Label lblFaturamento;
-        private Label lblQuantidadeVendas;
-        private Label lblItensVendidos;
-        private DataGridView dgvJogos;
-        private DataGridView dgvVendas;
-        private Button btnAtualizar;
+        private readonly CultureInfo cultura = new CultureInfo("pt-BR");
 
         public FrmTeladeRelatorio()
         {
             InitializeComponent();
-            MontarTela();
             AtualizarRelatorio();
-        }
-
-        private void MontarTela()
-        {
-            Text = "Relatório de Vendas - LojaGamesRetro";
-            StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(1000, 700);
-            MinimumSize = new Size(850, 600);
-
-            Controls.Clear();
-
-            Label titulo = new Label
-            {
-                Text = "RELATÓRIO DA LOJA",
-                Font = new Font("Arial", 18, FontStyle.Bold),
-                Location = new Point(20, 15),
-                Size = new Size(500, 35)
-            };
-            Controls.Add(titulo);
-
-            lblFaturamento = new Label
-            {
-                Location = new Point(20, 60),
-                Size = new Size(280, 30),
-                Font = new Font("Arial", 11, FontStyle.Bold)
-            };
-
-            lblQuantidadeVendas = new Label
-            {
-                Location = new Point(320, 60),
-                Size = new Size(220, 30),
-                Font = new Font("Arial", 11, FontStyle.Bold)
-            };
-
-            lblItensVendidos = new Label
-            {
-                Location = new Point(560, 60),
-                Size = new Size(220, 30),
-                Font = new Font("Arial", 11, FontStyle.Bold)
-            };
-
-            Controls.Add(lblFaturamento);
-            Controls.Add(lblQuantidadeVendas);
-            Controls.Add(lblItensVendidos);
-
-            Label tituloJogos = new Label
-            {
-                Text = "Jogos e estoque",
-                Location = new Point(20, 105),
-                Size = new Size(300, 25),
-                Font = new Font("Arial", 12, FontStyle.Bold)
-            };
-            Controls.Add(tituloJogos);
-
-            dgvJogos = new DataGridView
-            {
-                Location = new Point(20, 135),
-                Size = new Size(940, 190),
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AutoSizeColumnsMode =
-                    DataGridViewAutoSizeColumnsMode.Fill,
-                SelectionMode =
-                    DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false
-            };
-            Controls.Add(dgvJogos);
-
-            Label tituloVendas = new Label
-            {
-                Text = "Histórico de vendas",
-                Location = new Point(20, 340),
-                Size = new Size(300, 25),
-                Font = new Font("Arial", 12, FontStyle.Bold)
-            };
-            Controls.Add(tituloVendas);
-
-            dgvVendas = new DataGridView
-            {
-                Location = new Point(20, 370),
-                Size = new Size(940, 230),
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AutoSizeColumnsMode =
-                    DataGridViewAutoSizeColumnsMode.Fill,
-                SelectionMode =
-                    DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false
-            };
-            Controls.Add(dgvVendas);
-
-            btnAtualizar = new Button
-            {
-                Text = "Atualizar relatório",
-                Location = new Point(20, 615),
-                Size = new Size(180, 35)
-            };
-            btnAtualizar.Click += (s, e) => AtualizarRelatorio();
-            Controls.Add(btnAtualizar);
         }
 
         private void AtualizarRelatorio()
         {
+            // Atualiza a tabela de jogos e estoque.
             var jogos = servicoJogos.ListarTodos()
                 .Select(jogo => new
                 {
@@ -149,6 +38,7 @@ namespace LojaGamesRetro.Views
             dgvJogos.DataSource = null;
             dgvJogos.DataSource = jogos;
 
+            // Atualiza o histórico de vendas.
             var vendas = servicoVendas.ListarVendas()
                 .OrderByDescending(venda => venda.Data)
                 .Select(venda => new
@@ -163,22 +53,137 @@ namespace LojaGamesRetro.Views
             dgvVendas.DataSource = null;
             dgvVendas.DataSource = vendas;
 
-            lblFaturamento.Text =
-                "Faturamento: " +
-                servicoVendas.CalcularFaturamento().ToString("C", cultura);
+            // Atualiza os indicadores.
+            decimal faturamento = servicoVendas.CalcularFaturamento();
+            int quantidadeVendas = servicoVendas.ContarVendas();
+            int itensVendidos = servicoVendas.ContarItensVendidos();
 
-            lblQuantidadeVendas.Text =
-                "Vendas: " + servicoVendas.ContarVendas();
+            decimal ticketMedio = quantidadeVendas > 0
+                ? faturamento / quantidadeVendas
+                : 0m;
 
-            lblItensVendidos.Text =
-                "Itens vendidos: " + servicoVendas.ContarItensVendidos();
+            lblFaturamento.Text = faturamento.ToString("C", cultura);
+            lblQuantidadeVendas.Text = quantidadeVendas.ToString();
+            lblItensVendidos.Text = itensVendidos.ToString();
+            lblTicketMedio.Text = ticketMedio.ToString("C", cultura);
+        }
+
+        private void btnAtualizar_Click(object sender, EventArgs e)
+        {
+            AtualizarRelatorio();
+
+            MessageBox.Show(
+                "Relatório atualizado com sucesso!",
+                "Relatórios",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+
+        private void btnVoltar_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void btnExportar_Click(object sender, EventArgs e)
+        {
+            var vendas = servicoVendas.ListarVendas()
+                .OrderByDescending(venda => venda.Data)
+                .ToList();
+
+            if (vendas.Count == 0)
+            {
+                MessageBox.Show(
+                    "Não existem vendas para exportar.",
+                    "Relatórios",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            using (SaveFileDialog dialogo = new SaveFileDialog())
+            {
+                dialogo.Title = "Exportar relatório de vendas";
+                dialogo.Filter = "Arquivo CSV (*.csv)|*.csv";
+                dialogo.FileName = "RelatorioVendas.csv";
+                dialogo.DefaultExt = "csv";
+                dialogo.AddExtension = true;
+
+                if (dialogo.ShowDialog() != DialogResult.OK)
+                    return;
+
+                try
+                {
+                    using (StreamWriter escritor = new StreamWriter(
+                        dialogo.FileName,
+                        false,
+                        new UTF8Encoding(true)))
+                    {
+                        escritor.WriteLine(
+                            "ID;Data;Itens vendidos;Total");
+
+                        foreach (var venda in vendas)
+                        {
+                            string resumo = EscaparCsv(venda.ResumoItens);
+                            string data = venda.Data.ToString(
+                                "dd/MM/yyyy HH:mm:ss");
+
+                            string total = venda.Total.ToString(
+                                "0.00", CultureInfo.InvariantCulture);
+
+                            escritor.WriteLine(
+                                venda.Id + ";" +
+                                EscaparCsv(data) + ";" +
+                                resumo + ";" +
+                                total);
+                        }
+
+                        escritor.WriteLine();
+                        escritor.WriteLine(
+                            "Faturamento total;;;" +
+                            servicoVendas.CalcularFaturamento()
+                                .ToString("0.00", CultureInfo.InvariantCulture));
+
+                        escritor.WriteLine(
+                            "Quantidade de vendas;;;" +
+                            servicoVendas.ContarVendas());
+
+                        escritor.WriteLine(
+                            "Itens vendidos;;;" +
+                            servicoVendas.ContarItensVendidos());
+                    }
+
+                    MessageBox.Show(
+                        "Relatório exportado com sucesso!",
+                        "Exportação concluída",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        "Não foi possível exportar o relatório.\n\n" +
+                        ex.Message,
+                        "Erro na exportação",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private string EscaparCsv(string valor)
+        {
+            if (string.IsNullOrEmpty(valor))
+                return "\"\"";
+
+            return "\"" + valor.Replace("\"", "\"\"") + "\"";
         }
 
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
 
-            if (dgvJogos != null && dgvVendas != null)
+            if (IsHandleCreated)
                 AtualizarRelatorio();
         }
     }

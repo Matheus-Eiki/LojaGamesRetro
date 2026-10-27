@@ -1,7 +1,7 @@
 ﻿
 namespace LojaGamesRetro.Views
 {
-    partial class TelaJogos
+    partial class FrmTelaCardsJogos
     {
         private System.ComponentModel.IContainer components = null;
 

@@ -10,27 +10,30 @@ using LojaGamesRetro.Services;
 
 namespace LojaGamesRetro.Views
 {
-    public partial class TelaJogos : Form
+    public partial class FrmTelaCardsJogos : Form
     {
-        private readonly ServicesJogos jogoService = new ServicesJogos();
+        private readonly ServicesJogos jogoService =
+            new ServicesJogos();
 
-        // Guarda os jogos escolhidos e suas quantidades.
+        private readonly ServicesVendas servicoVendas =
+            new ServicesVendas();
+
         private readonly Dictionary<Jogo, int> pedido =
             new Dictionary<Jogo, int>();
 
         private readonly CultureInfo cultura =
             new CultureInfo("pt-BR");
 
-        public TelaJogos()
+        public FrmTelaCardsJogos()
         {
             InitializeComponent();
             CarregarJogos();
             AtualizarPedido();
+
         }
 
         private void CarregarJogos()
         {
-            flowJogos.SuspendLayout();
             flowJogos.Controls.Clear();
 
             foreach (Jogo jogo in jogoService.ListarTodos())
@@ -38,8 +41,8 @@ namespace LojaGamesRetro.Views
                 Panel card = new Panel
                 {
                     Width = 245,
-                    Height = 160,
-                    Margin = new Padding(8),
+                    Height = 155,
+                    Margin = new Padding(5),
                     BorderStyle = BorderStyle.FixedSingle,
                     BackColor = Color.White
                 };
@@ -47,49 +50,51 @@ namespace LojaGamesRetro.Views
                 Label lblNome = new Label
                 {
                     Text = jogo.Nome,
-                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
                     Location = new Point(10, 10),
-                    Size = new Size(220, 30),
-                    AutoEllipsis = true
+                    Size = new Size(220, 25),
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold)
                 };
 
                 Label lblPreco = new Label
                 {
                     Text = "Preço: " + jogo.Preco.ToString("C", cultura),
-                    Location = new Point(10, 45),
+                    Location = new Point(10, 42),
                     Size = new Size(220, 22)
                 };
 
                 Label lblEstoque = new Label
                 {
                     Text = "Estoque: " + jogo.Estoque,
-                    Location = new Point(10, 70),
+                    Location = new Point(10, 66),
                     Size = new Size(220, 22)
                 };
 
                 NumericUpDown nudQuantidade = new NumericUpDown
                 {
+                    Location = new Point(10, 95),
+                    Size = new Size(65, 25),
                     Minimum = 1,
                     Maximum = Math.Max(1, jogo.Estoque),
                     Value = 1,
-                    Location = new Point(10, 112),
-                    Size = new Size(65, 28),
                     Enabled = jogo.Estoque > 0
                 };
 
                 Button btnAdicionar = new Button
                 {
                     Text = jogo.Estoque > 0
-                        ? "Adicionar ao pedido"
+                        ? "Adicionar"
                         : "Sem estoque",
-                    Location = new Point(82, 110),
-                    Size = new Size(148, 30),
+                    Location = new Point(85, 92),
+                    Size = new Size(135, 30),
                     Enabled = jogo.Estoque > 0
                 };
 
                 btnAdicionar.Click += (sender, e) =>
                 {
-                    AdicionarAoPedido(jogo, (int)nudQuantidade.Value);
+                    AdicionarAoPedido(
+                        jogo,
+                        (int)nudQuantidade.Value
+                    );
                 };
 
                 card.Controls.Add(lblNome);
@@ -100,8 +105,6 @@ namespace LojaGamesRetro.Views
 
                 flowJogos.Controls.Add(card);
             }
-
-            flowJogos.ResumeLayout();
         }
 
         private void AdicionarAoPedido(Jogo jogo, int quantidade)
@@ -110,20 +113,19 @@ namespace LojaGamesRetro.Views
                 ? pedido[jogo]
                 : 0;
 
-            if (quantidade <= 0 ||
-                quantidadeAtual + quantidade > jogo.Estoque)
+            if (quantidadeAtual + quantidade > jogo.Estoque)
             {
                 MessageBox.Show(
-                    "Estoque insuficiente para essa quantidade.",
-                    "Estoque",
+                    "Quantidade maior que o estoque disponível.",
+                    "Estoque insuficiente",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    MessageBoxIcon.Warning
+                );
 
                 return;
             }
 
             pedido[jogo] = quantidadeAtual + quantidade;
-
             AtualizarPedido();
         }
 
@@ -131,17 +133,18 @@ namespace LojaGamesRetro.Views
         {
             lstPedido.Items.Clear();
 
-            foreach (KeyValuePair<Jogo, int> item in pedido)
+            decimal total = 0;
+
+            foreach (var item in pedido)
             {
                 decimal subtotal = item.Key.Preco * item.Value;
+                total += subtotal;
 
                 lstPedido.Items.Add(
-                    $"{item.Key.Nome} - {item.Value} un. - " +
-                    subtotal.ToString("C", cultura));
+                    $"{item.Key.Nome} x{item.Value} - " +
+                    subtotal.ToString("C", cultura)
+                );
             }
-
-            decimal total = pedido.Sum(
-                item => item.Key.Preco * item.Value);
 
             lblTotal.Text = "Total: " + total.ToString("C", cultura);
         }
@@ -150,15 +153,20 @@ namespace LojaGamesRetro.Views
         {
             int indice = lstPedido.SelectedIndex;
 
-            if (indice < 0 || indice >= pedido.Count)
+            if (indice < 0)
             {
-                MessageBox.Show("Selecione um item para remover.");
+                MessageBox.Show(
+                    "Selecione um item para remover.",
+                    "Atenção",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
                 return;
             }
 
-            Jogo jogoSelecionado = pedido.Keys.ElementAt(indice);
-
-            pedido.Remove(jogoSelecionado);
+            Jogo jogo = pedido.Keys.ElementAt(indice);
+            pedido.Remove(jogo);
 
             AtualizarPedido();
         }
@@ -167,58 +175,78 @@ namespace LojaGamesRetro.Views
         {
             if (pedido.Count == 0)
             {
-                MessageBox.Show("Adicione pelo menos um jogo ao pedido.");
+                MessageBox.Show(
+                    "Adicione pelo menos um jogo ao pedido.",
+                    "Pedido vazio",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
                 return;
             }
 
-            foreach (KeyValuePair<Jogo, int> item in pedido)
+            // Verifica o estoque de todos os jogos antes da baixa.
+            foreach (var item in pedido)
             {
-                Jogo atual = jogoService.BuscarPorId(item.Key.Id);
+                Jogo jogoAtual =
+                    jogoService.BuscarPorId(item.Key.Id);
 
-                if (atual == null || atual.Estoque < item.Value)
+                if (jogoAtual == null ||
+                    jogoAtual.Estoque < item.Value)
                 {
                     MessageBox.Show(
-                        $"Estoque insuficiente para {item.Key.Nome}.");
+                        "Estoque insuficiente para " + item.Key.Nome + ".",
+                        "Atenção",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
 
                     CarregarJogos();
                     return;
                 }
             }
 
-            decimal total = pedido.Sum(
-                item => item.Key.Preco * item.Value);
+            // Registra a venda antes de baixar o estoque.
+            if (!servicoVendas.RegistrarVenda(pedido))
+            {
+                MessageBox.Show(
+                    "Não foi possível registrar a venda.",
+                    "Erro",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
 
-            DialogResult resposta = MessageBox.Show(
-                $"Deseja finalizar o pedido?\n\nTotal: {total.ToString("C", cultura)}",
-                "Confirmar pedido",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (resposta != DialogResult.Yes)
                 return;
+            }
 
-            foreach (KeyValuePair<Jogo, int> item in pedido)
+            // Baixa o estoque após registrar a venda.
+            foreach (var item in pedido)
             {
                 if (!jogoService.BaixarEstoque(
                     item.Key.Id, item.Value))
                 {
                     MessageBox.Show(
-                        $"Não foi possível atualizar o estoque de {item.Key.Nome}.");
+                        "Não foi possível atualizar o estoque.",
+                        "Erro",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error
+                    );
 
-                    CarregarJogos();
                     return;
                 }
             }
 
             MessageBox.Show(
-                $"Pedido finalizado!\nTotal: {total.ToString("C", cultura)}",
-                "Venda concluída",
+                "Venda finalizada com sucesso!",
+                "Sucesso",
                 MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+                MessageBoxIcon.Information
+            );
 
             pedido.Clear();
-            AtualizarPedido();
+
             CarregarJogos();
+            AtualizarPedido();
         }
 
         private void btnVoltar_Click(object sender, EventArgs e)
@@ -228,6 +256,7 @@ namespace LojaGamesRetro.Views
 
         private void flowJogos_Paint(object sender, PaintEventArgs e)
         {
+            // Os cards são carregados pelo método CarregarJogos().
         }
     }
 }
