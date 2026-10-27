@@ -59,11 +59,11 @@ namespace LojaGamesRetro
             lblDescricao.AutoSize = true;
             lblDescricao.Font = new Font("Segoe UI", 11F);
             lblDescricao.ForeColor = Color.FromArgb(190, 197, 220);
-            lblDescricao.Location = new Point(230, 225);
+            lblDescricao.Location = new Point(257, 219);
             lblDescricao.Name = "lblDescricao";
-            lblDescricao.Size = new Size(245, 20);
+            lblDescricao.Size = new Size(211, 20);
             lblDescricao.TabIndex = 3;
-            lblDescricao.Text = "Sua próxima aventura começa aqui.";
+            lblDescricao.Text = "Seu próximo jogo já está aqui.";
             // 
             // lblCarregamento
             // 
