@@ -19,5 +19,25 @@ namespace LojaGamesRetro
         {
 
         }
+
+        private void btnJogos_Click(object sender, EventArgs e)
+        {
+            TelaCardsJogos telaJogos = new TelaCardsJogos();
+
+            telaJogos.FormClosed += (s, args) => this.Show();
+
+            this.Hide();
+            telaJogos.Show();
+        }
+
+        private void btnRelatorioVendas_Click(object sender, EventArgs e)
+        {
+            TelaRelatorioVendas telaRelatorio = new TelaRelatorioVendas();
+
+            telaRelatorio.FormClosed += (s, args) => this.Show();
+
+            this.Hide();
+            telaRelatorio.Show();
+        }
     }
 }
