@@ -4,14 +4,14 @@ using System.Windows.Forms;
 
 namespace LojaGamesRetro
 {
-    public partial class TelaSplash : Form
+    public partial class FrmTelaSplash : Form
     {
         private int progresso = 0;
 
-        // Evento para avisar que o carregamento terminou
+        // Avisa quando o carregamento termina.
         public event EventHandler? SplashConcluida;
 
-        public TelaSplash()
+        public FrmTelaSplash()
         {
             InitializeComponent();
         }
@@ -20,7 +20,6 @@ namespace LojaGamesRetro
         {
             progresso = 0;
             progressBarSplash.Value = 0;
-
             lblCarregamento.Text = "INICIANDO SISTEMA... 0%";
 
             timerSplash.Start();
@@ -33,7 +32,6 @@ namespace LojaGamesRetro
                 progresso = Math.Min(progresso + 2, 100);
 
                 progressBarSplash.Value = progresso;
-
                 lblCarregamento.Text =
                     $"INICIANDO SISTEMA... {progresso}%";
             }
@@ -43,6 +41,7 @@ namespace LojaGamesRetro
 
                 lblCarregamento.Text = "CARREGAMENTO CONCLUÍDO!";
 
+                // Notifica o programa de que o splash terminou.
                 SplashConcluida?.Invoke(this, EventArgs.Empty);
             }
         }

@@ -1,7 +1,7 @@
 ﻿
 namespace LojaGamesRetro
 {
-    partial class TelaSplash
+    partial class FrmTelaSplash
     {
         private System.ComponentModel.IContainer? components = null;
         private System.Windows.Forms.Label lblTitulo;

@@ -1,17 +1,33 @@
+
+using System;
+using System.Windows.Forms;
+
 namespace LojaGamesRetro
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new TelaSplash());
+
+            FrmTelaSplash splash = new FrmTelaSplash();
+
+            splash.SplashConcluida += (sender, e) =>
+            {
+                FrmTelaMenu menu = new FrmTelaMenu();
+
+                // Se o menu for fechado, encerra o aplicativo.
+                menu.FormClosed += (s, args) =>
+                {
+                    Application.Exit();
+                };
+
+                menu.Show();
+                splash.Hide();
+            };
+
+            Application.Run(splash);
         }
     }
 }
