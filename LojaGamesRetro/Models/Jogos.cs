@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LojaGamesRetro.Models
+﻿namespace LojaGamesRetro.Models
 {
-    internal class Jogos
+    public class Jogo
     {
+        public int Id { get; set; }
+        public string Nome { get; set; } = "";
+        public decimal Preco { get; set; }
+        public int Estoque { get; set; }
     }
 }
